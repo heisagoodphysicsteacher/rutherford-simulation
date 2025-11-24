@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>盧瑟福金箔實驗（真物理散射版）</title>
+<style>
+  body { background:white; text-align:center; }
+  canvas { background:white; border:1px solid black; margin-top:20px; }
+</style>
+</head>
+<body>
+
+<h2>Rutherford's Alpha Scattering Experiment (PLKCHC)：Pass Through Straight?｜Deflect?｜Bounce Back?</h2>
+<canvas id="c" width="900" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+// 金原子（核 + 電子雲）
+const atom = { x: 450, y: 250, nucleusR: 12 };
+
+// 儲存粒子
+let particles = [];
+
+function createParticle() {
+  particles.push({
+    x: 0,
+    y: Math.random() * canvas.height,
+    vx: 3,
+    vy: 0
+  });
+}
+
+setInterval(createParticle, 120);
+
+// 畫原子
+function drawAtom() {
+  ctx.strokeStyle = "rgba(0,0,0,0.2)";
+  [60, 100, 140].forEach(r => {
+    ctx.beginPath();
+    ctx.arc(atom.x, atom.y, r, 0, Math.PI*2);
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = "gold";
+  ctx.beginPath();
+  ctx.arc(atom.x, atom.y, atom.nucleusR, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function updateParticle(p) {
+  // 計算與 nucleus 距離
+  let dx = p.x - atom.x;
+  let dy = p.y - atom.y;
+  let r = Math.sqrt(dx*dx + dy*dy);
+
+  // --------
+  // 物理條件
+  // --------
+
+  // 如果真的「撞中」核 → 反彈
+  if (r < atom.nucleusR) {
+    p.vx = -p.vx * 1.2;  // 反向加速
+    p.vy += (dy > 0 ? 1.5 : -1.5); // 加強垂直分量
+  }
+
+  // 如果接近 nucleus（距離很近）→ 偏轉
+  else if (r < 60) {  
+    let force = 1500 / (r*r); // 庫倫斥力簡化
+    p.vx += force * (dx / r);
+    p.vy += force * (dy / r);
+  }
+
+  // 更新位置
+  p.x += p.vx;
+  p.y += p.vy;
+}
+
+function drawParticle(p) {
+  ctx.fillStyle = "red";
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function loop() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  drawAtom();
+
+  particles.forEach(p => {
+    updateParticle(p);
+    drawParticle(p);
+  });
+
+  // 清除離開畫面粒子
+  particles = particles.filter(p => 
+    p.x > -20 && p.x < canvas.width + 20
+  );
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
